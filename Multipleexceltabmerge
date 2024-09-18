@@ -1,0 +1,42 @@
+const XLSX = require('xlsx');
+const fs = require('fs');
+const path = require('path');
+
+// Function to merge all sheets from multiple Excel files
+const mergeExcelFilesWithTabs = (inputFiles, outputFile) => {
+    const newWorkbook = XLSX.utils.book_new(); // Create a new workbook
+
+    inputFiles.forEach((file, index) => {
+        const workbook = XLSX.readFile(file); // Read each Excel file
+
+        // Loop through each sheet in the current workbook
+        workbook.SheetNames.forEach((sheetName) => {
+            const sheet = workbook.Sheets[sheetName]; // Get the sheet by name
+            const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Convert sheet to 2D array
+
+            // Create a new sheet name to avoid conflicts, appending the file index
+            const newSheetName = `${path.basename(file, '.xlsx')}_${sheetName}_${index}`;
+            
+            // Add this sheet to the new workbook
+            const newSheet = XLSX.utils.aoa_to_sheet(data); // Convert the 2D array back to a sheet
+            XLSX.utils.book_append_sheet(newWorkbook, newSheet, newSheetName);
+        });
+    });
+
+    // Write the new merged Excel file
+    XLSX.writeFile(newWorkbook, outputFile);
+};
+
+// Define input files and output file
+const inputFiles = [
+    path.join(__dirname, 'file1.xlsx'),
+    path.join(__dirname, 'file2.xlsx'),
+    path.join(__dirname, 'file3.xlsx')
+];
+
+const outputFile = path.join(__dirname, 'merged_output_with_tabs.xlsx');
+
+// Merge the Excel files with all their sheets
+mergeExcelFilesWithTabs(inputFiles, outputFile);
+
+console.log('Files and sheets merged successfully!');
